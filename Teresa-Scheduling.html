@@ -1,0 +1,1492 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teresa Scheduling</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      background: #f3f4f6;
+      color: #111827;
+      padding: 16px;
+    }
+
+    .page {
+      max-width: 1500px;
+      margin: 0 auto;
+      display: grid;
+      grid-template-columns: 0.6fr 2.4fr; /* wider graph */
+      gap: 24px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 1.1rem;
+      margin-bottom: 6px;
+    }
+
+    label {
+      font-size: 0.9rem;
+      display: block;
+      margin-bottom: 4px;
+    }
+
+    input, select, button {
+      font-size: 0.9rem;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="time"],
+    select {
+      width: 100%;
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      margin-bottom: 10px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 14px 16px;
+      box-shadow: 0 14px 32px rgba(15, 23, 42, 0.11);
+      margin-bottom: 12px;
+    }
+
+    .row {
+      display: flex;
+      gap: 10px;
+    }
+
+    .row > div {
+      flex: 1;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 7px 14px;
+      border-radius: 999px;
+      border: none;
+      background: #2563eb;
+      color: white;
+      font-size: 0.9rem;
+      cursor: pointer;
+      margin-top: 4px;
+    }
+
+    .btn:hover {
+      filter: brightness(1.05);
+    }
+
+    .btn-secondary {
+      background: #6b7280;
+    }
+
+    .btn-ghost {
+      background: transparent;
+      border: 1px solid #cbd5f5;
+      color: #2563eb;
+    }
+
+    .section-title {
+      margin-bottom: 8px;
+      font-weight: 600;
+    }
+
+    .small-text {
+      font-size: 0.8rem;
+      color: #6b7280;
+    }
+
+    /* Staff box layout */
+    .staff-row {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      column-gap: 10px;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .staff-role {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.85rem;
+      white-space: nowrap;
+    }
+
+    .pill-color {
+      width: 14px;
+      height: 14px;
+      border-radius: 4px;
+      border: 1px solid #9ca3af;
+    }
+
+    .staff-name-input {
+      padding: 6px 8px;
+    }
+
+    .staff-del-btn {
+      border: none;
+      background: transparent;
+      color: #b91c1c;
+      cursor: pointer;
+      font-size: 0.85rem;
+      padding: 2px 4px;
+    }
+
+    .staff-del-btn:hover {
+      color: #7f1d1d;
+    }
+
+    .add-staff-btn {
+      margin-top: 8px;
+      font-size: 0.8rem;
+      padding: 5px 10px;
+    }
+
+    /* RIGHT SIDE: GRAPH */
+    .graph-header {
+      margin-bottom: 10px;
+    }
+
+    .store-title {
+      font-size: 1.3rem;
+      font-weight: 700;
+      margin-bottom: 4px;
+    }
+
+    .week-range {
+      font-size: 0.9rem;
+      color: #4b5563;
+    }
+
+    /* Outer frame around the whole schedule (graph + totals) */
+    #graphCapture {
+      margin-bottom: 12px;
+      max-width: 1400px;
+      border: 1px solid #d1d5db;
+      border-radius: 14px;
+      padding: 10px 12px 12px 12px;
+      background: #ffffff;
+    }
+
+    .timeline-wrapper {
+      background: white;
+      border-radius: 14px;
+      padding: 16px 14px 18px 16px;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+      width: 100%;
+      border: 1px solid #e5e7eb;
+    }
+
+    .time-scale {
+      display: grid;
+      grid-template-columns: repeat(15, 1fr); /* 9AM - 11PM */
+      font-size: 0.7rem;
+      color: #6b7280;
+      margin: 0 0 10px 160px;
+      column-gap: 2px;
+    }
+
+    .time-scale span {
+      text-align: center;
+      white-space: nowrap;
+    }
+
+    .timeline-day {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 10px;
+      padding-bottom: 6px;
+      border-bottom: 1px solid #e5e7eb; /* divider per day */
+    }
+
+    .timeline-day:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .day-label {
+      width: 160px; /* for day + date + year */
+      font-size: 0.8rem;
+      color: #4b5563;
+    }
+
+    .day-bars {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .timeline-bar {
+      position: relative;
+      height: 40px;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+      overflow: hidden;
+      background-color: #f9fafb;
+      background-image:
+        repeating-linear-gradient(
+          to right,
+          #e5e7eb 0,
+          #e5e7eb 1px,
+          transparent 1px,
+          transparent calc(100% / 14)
+        );
+    }
+
+    .shift-block {
+      position: absolute;
+      top: 4px;
+      bottom: 4px;
+      border-radius: 5px;
+      font-size: 0.75rem;
+      padding: 2px 6px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: clip;
+      color: #111827;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0.97;
+      cursor: pointer;
+    }
+
+    .shift-block span {
+      background: rgba(255, 255, 255, 0.75);
+      padding: 0 4px;
+      border-radius: 3px;
+    }
+
+    .no-shifts {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      margin-top: 8px;
+    }
+
+    .shift-list {
+      margin-top: 12px;
+      border-top: 1px dashed #e5e7eb;
+      padding-top: 8px;
+    }
+
+    .shift-list-item {
+      font-size: 0.8rem;
+      margin-bottom: 4px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .shift-delete-btn {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.75rem;
+      color: #b91c1c;
+      padding: 0 4px;
+    }
+
+    .shift-delete-btn:hover {
+      color: #7f1d1d;
+    }
+
+    /* Totals section */
+    .totals-wrapper {
+      margin-top: 14px;
+      background: white;
+      border-radius: 12px;
+      padding: 10px 14px 12px 14px;
+      box-shadow: 0 10px 26px rgba(15, 23, 42, 0.08);
+      border: 1px solid #e5e7eb;
+    }
+
+    .totals-header-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+    }
+
+    .totals-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+
+    .filter-select {
+      font-size: 0.8rem;
+    }
+
+    .totals-cell {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.85rem;
+      background: #f9fafb;
+      border-radius: 8px;
+      border: 1px solid #e5e7eb;
+      padding: 4px 8px;
+      margin-bottom: 4px;
+    }
+
+    .totals-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .totals-name {
+      font-weight: 600;
+    }
+
+    .grand-total {
+      margin-top: 6px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      text-align: right;
+    }
+
+    @media (max-width: 900px) {
+      .page {
+        grid-template-columns: 1fr;
+      }
+      .day-label {
+        width: 140px;
+      }
+      .time-scale {
+        margin-left: 140px;
+      }
+    }
+
+    @media print {
+      @page {
+        /* default; JS will inject a rule for portrait/landscape if needed */
+        size: auto;
+        margin: 10mm;
+      }
+      * {
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      html, body {
+        width: auto;
+        height: auto;
+      }
+      body {
+        background: white;
+        padding: 0;
+      }
+      .left-panel {
+        display: none !important;
+      }
+      .right-panel {
+        width: 100% !important;
+        transform: scale(0.85);
+        transform-origin: top left;
+      }
+      .page {
+        display: block;
+        margin: 0;
+      }
+      .no-print {
+        display: none !important;
+      }
+      .totals-wrapper {
+        box-shadow: none;
+      }
+    }
+
+    /* Image preview modal */
+    .image-modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.55);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+
+    .image-modal-content {
+      background: white;
+      border-radius: 12px;
+      padding: 10px 12px;
+      max-width: 90vw;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .image-preview-container {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: auto;
+      background: #f3f4f6;
+      border-radius: 8px;
+      padding: 6px;
+    }
+
+    #imagePreview {
+      max-width: 100%;
+      max-height: 70vh;
+      transition: transform 0.2s;
+    }
+
+    .image-modal-controls {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      font-size: 0.85rem;
+    }
+
+    .image-modal-controls-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .image-modal-controls-right {
+      display: flex;
+      gap: 6px;
+    }
+
+    .image-modal label {
+      margin-bottom: 0;
+    }
+
+    .range-label {
+      min-width: 60px;
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <!-- LEFT SIDE -->
+    <div class="left-panel">
+      <h1>Teresa Scheduling</h1>
+      <p class="small-text">
+        Fill in the details on the left. The colored graph on the right updates automatically.
+      </p>
+
+      <div class="card">
+        <h2 class="section-title">Store & Date Coverage</h2>
+
+        <label for="storeSelect">Store</label>
+        <div class="row">
+          <div>
+            <select id="storeSelect">
+              <option value="">-- Select store --</option>
+              <option value="Kure Augusta">Kure Augusta</option>
+              <option value="Kure Danville">Kure Danville</option>
+              <option value="Kure Richmond">Kure Richmond</option>
+              <option value="The Garden Greenville">The Garden Greenville</option>
+            </select>
+          </div>
+          <div>
+            <button type="button" class="btn btn-ghost no-print" id="nextStoreBtn">
+              Next Store Schedule
+            </button>
+          </div>
+        </div>
+
+        <div class="row">
+          <div>
+            <label for="dateStart">Date covered (start)</label>
+            <input type="date" id="dateStart" />
+          </div>
+          <div>
+            <label for="dateEnd">Date covered (end)</label>
+            <input type="date" id="dateEnd" />
+          </div>
+        </div>
+
+        <p class="small-text">
+          Coverage can be any range up to <strong>1 month</strong> (maximum 31 days). Each store has its own schedule.
+        </p>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">Employee tags (fixed colors)</h2>
+        <p class="small-text" style="margin-bottom:6px;">
+          Each tag has its own color. Type the employee name in the box.
+          The graph will use that name (or the tag name if the box is empty).
+        </p>
+        <div id="staffList"></div>
+        <button type="button" class="btn btn-ghost add-staff-btn" id="addStaffRowBtn">+ Add Staff</button>
+      </div>
+
+      <div class="card">
+        <h2 class="section-title">Add Schedule (Shifts)</h2>
+
+        <label for="daySelect">Date</label>
+        <select id="daySelect">
+          <option value="">-- Set date coverage first --</option>
+        </select>
+
+        <label for="staffSelect">Staff</label>
+        <select id="staffSelect">
+          <option value="">-- Staff tags will appear here --</option>
+        </select>
+
+        <div class="row">
+          <div>
+            <label for="timeFrom">From (12-hr)</label>
+            <input type="time" id="timeFrom" step="1800" min="09:00" max="23:00" />
+          </div>
+          <div>
+            <label for="timeTo">To (12-hr)</label>
+            <input type="time" id="timeTo" step="1800" min="09:00" max="23:00" />
+          </div>
+        </div>
+
+        <p class="small-text">
+          Visible time range is <strong>9:00 AM – 11:00 PM</strong>.<br>
+          Click a colored box in the graph to <strong>rename staff or delete that shift</strong>.
+        </p>
+
+        <button class="btn" id="addShiftBtn">Add Shift</button>
+        <button class="btn btn-secondary" id="clearShiftsBtn">Clear All Shifts</button>
+
+        <div class="shift-list" id="shiftList"></div>
+      </div>
+    </div>
+
+    <!-- RIGHT SIDE -->
+    <div class="right-panel">
+      <div class="no-print" style="display:flex; justify-content:flex-end; gap:8px; margin-bottom:8px; align-items:center;">
+        <span class="small-text">Print orientation:</span>
+        <select id="printOrient" class="filter-select" style="width:auto;">
+          <option value="auto">Auto</option>
+          <option value="portrait">Portrait</option>
+          <option value="landscape">Landscape</option>
+        </select>
+        <button class="btn" id="printBtn" type="button">Print / Save as PDF</button>
+        <button class="btn btn-ghost" id="saveImgBtn" type="button">Save graph as image</button>
+      </div>
+
+      <!-- Capture BOTH graph + totals -->
+      <div id="graphCapture">
+        <div class="graph-header">
+          <div class="store-title" id="storeTitleDisplay">[Store Name]</div>
+          <div class="week-range" id="weekRangeDisplay">
+            Select a store and date coverage to see the schedule.
+          </div>
+        </div>
+
+        <div class="timeline-wrapper">
+          <div class="time-scale">
+            <span>9 AM</span><span>10 AM</span><span>11 AM</span><span>12 PM</span>
+            <span>1 PM</span><span>2 PM</span><span>3 PM</span><span>4 PM</span>
+            <span>5 PM</span><span>6 PM</span><span>7 PM</span><span>8 PM</span>
+            <span>9 PM</span><span>10 PM</span><span>11 PM</span>
+          </div>
+
+          <div id="timelineContainer"></div>
+
+          <div class="no-shifts" id="noShiftsMsg">
+            No shifts yet. Add staff and schedule on the left.
+          </div>
+        </div>
+
+        <!-- Totals INCLUDED in the captured area -->
+        <div class="totals-wrapper">
+          <div class="totals-header-row">
+            <div class="totals-title">Total hours per staff (current store & coverage)</div>
+            <div class="small-text">
+              View:
+              <select id="staffFilter" class="filter-select">
+                <option value="">All staff</option>
+              </select>
+            </div>
+          </div>
+          <div id="totalsContainer" class="small-text">
+            No shifts yet.
+          </div>
+          <div id="grandTotal" class="grand-total"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image preview modal -->
+  <div id="imageModal" class="image-modal no-print">
+    <div class="image-modal-content">
+      <div class="image-modal-controls">
+        <div class="image-modal-controls-left">
+          <label for="imgOrient">Orientation:</label>
+          <select id="imgOrient">
+            <option value="landscape">Landscape</option>
+            <option value="portrait">Portrait</option>
+          </select>
+
+          <span class="range-label">Scale:</span>
+          <input type="range" id="imgScale" min="50" max="150" value="100" />
+          <span id="imgScaleLabel">100%</span>
+        </div>
+        <div class="image-modal-controls-right">
+          <button type="button" class="btn btn-ghost" id="imageCloseBtn">Close</button>
+          <button type="button" class="btn" id="imageDownloadBtn">Download</button>
+        </div>
+      </div>
+
+      <div class="image-preview-container">
+        <img id="imagePreview" alt="Schedule preview" />
+      </div>
+    </div>
+  </div>
+
+  <!-- Library to capture schedule as image (needs internet the first time) -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <script>
+    const START_MIN = 9 * 60;   // 9 AM
+    const END_MIN   = 23 * 60;  // 11 PM
+    const TOTAL_MIN = END_MIN - START_MIN;
+    const STORE_KEYS = [
+      "Kure Augusta",
+      "Kure Danville",
+      "Kure Richmond",
+      "The Garden Greenville"
+    ];
+
+    // Fixed staff roles + colors
+    const DEFAULT_STAFF_PRESETS = [
+      { id: "manager", roleLabel: "Manager", name: "", color: "#93c5fd" },   // light blue
+      { id: "staff1",  roleLabel: "Staff 1", name: "", color: "#fecaca" },   // light red
+      { id: "staff2",  roleLabel: "Staff 2", name: "", color: "#bbf7d0" },   // light green
+      { id: "staff3",  roleLabel: "Staff 3", name: "", color: "#fef9c3" },   // light yellow
+      { id: "staff4",  roleLabel: "Staff 4", name: "", color: "#e9d5ff" },   // light purple
+      { id: "staff5",  roleLabel: "Staff 5", name: "", color: "#fed7aa" }    // light orange
+    ];
+
+    // Light colors for extra "+ Add Staff"
+    const EXTRA_COLORS = [
+      "#bae6fd", "#fecdd3", "#bbf7d0", "#fef3c7",
+      "#ddd6fe", "#fed7aa", "#a5b4fc", "#fda4af"
+    ];
+
+    // Generate random pastel color if we run out of predefined ones
+    function generatePastelColor() {
+      const r = Math.floor((Math.random() * 128) + 127); // 127–255
+      const g = Math.floor((Math.random() * 128) + 127);
+      const b = Math.floor((Math.random() * 128) + 127);
+      return `rgb(${r}, ${g}, ${b})`;
+    }
+
+    const schedulesByStore = {};
+    STORE_KEYS.forEach(k => {
+      schedulesByStore[k] = {
+        staff: [],
+        shifts: [],
+        dateStart: "",
+        dateEnd: "",
+        dateList: []
+      };
+    });
+
+    let staff = [];
+    let shifts = [];
+    let dateList = [];
+    let currentStoreKey = "";
+
+    const storeSelect = document.getElementById("storeSelect");
+    const nextStoreBtn = document.getElementById("nextStoreBtn");
+    const dateStartInput = document.getElementById("dateStart");
+    const dateEndInput = document.getElementById("dateEnd");
+    const storeTitleDisplay = document.getElementById("storeTitleDisplay");
+    const weekRangeDisplay = document.getElementById("weekRangeDisplay");
+
+    const staffListDiv = document.getElementById("staffList");
+    const addStaffRowBtn = document.getElementById("addStaffRowBtn");
+    const staffSelect = document.getElementById("staffSelect");
+
+    const daySelect = document.getElementById("daySelect");
+    const timeFromInput = document.getElementById("timeFrom");
+    const timeToInput = document.getElementById("timeTo");
+    const addShiftBtn = document.getElementById("addShiftBtn");
+    const clearShiftsBtn = document.getElementById("clearShiftsBtn");
+
+    const timelineContainer = document.getElementById("timelineContainer");
+    const noShiftsMsg = document.getElementById("noShiftsMsg");
+    const shiftListDiv = document.getElementById("shiftList");
+    const totalsDiv = document.getElementById("totalsContainer");
+    const grandTotalDiv = document.getElementById("grandTotal");
+
+    const staffFilterSelect = document.getElementById("staffFilter");
+
+    const printBtn = document.getElementById("printBtn");
+    const printOrientSelect = document.getElementById("printOrient");
+    const saveImgBtn = document.getElementById("saveImgBtn");
+
+    // Image modal elements
+    const imageModal = document.getElementById("imageModal");
+    const imagePreview = document.getElementById("imagePreview");
+    const imgOrientSelect = document.getElementById("imgOrient");
+    const imgScaleRange = document.getElementById("imgScale");
+    const imgScaleLabel = document.getElementById("imgScaleLabel");
+    const imageCloseBtn = document.getElementById("imageCloseBtn");
+    const imageDownloadBtn = document.getElementById("imageDownloadBtn");
+
+    let lastCaptureCanvas = null; // original capture
+
+    function timeStringToMinutes(str) {
+      if (!str) return null;
+      const [h, m] = str.split(":").map(Number);
+      return h * 60 + m;
+    }
+
+    function minutesTo12Hour(mins) {
+      const totalMinutes = ((mins % (24 * 60)) + (24 * 60)) % (24 * 60);
+      let h = Math.floor(totalMinutes / 60);
+      const m = totalMinutes % 60;
+      const ampm = h >= 12 ? "PM" : "AM";
+      h = h % 12;
+      if (h === 0) h = 12;
+      const mm = m.toString().padStart(2, "0");
+      return `${h.toString().padStart(2, "0")}:${mm} ${ampm}`;
+    }
+
+    function minutesTo12HourShort(mins) {
+      const totalMinutes = ((mins % (24 * 60)) + (24 * 60)) % (24 * 60);
+      let h = Math.floor(totalMinutes / 60);
+      const m = totalMinutes % 60;
+      const ampm = h >= 12 ? "pm" : "am";
+      h = h % 12;
+      if (h === 0) h = 12;
+      if (m === 0) return `${h}${ampm}`;
+      const mm = m.toString().padStart(2, "0");
+      return `${h}:${mm}${ampm}`;
+    }
+
+    function displayName(s) {
+      return s.name && s.name.trim() ? s.name.trim() : s.roleLabel;
+    }
+
+    function formatDateRange(startDateStr, endDateStr) {
+      if (!startDateStr || !endDateStr)
+        return "Select a store and date coverage to see the schedule.";
+
+      const start = new Date(startDateStr + "T00:00:00");
+      const end = new Date(endDateStr + "T00:00:00");
+      if (isNaN(start) || isNaN(end)) return "Invalid date.";
+
+      const opts = { month: "short", day: "numeric", year: "numeric" };
+      return `${start.toLocaleDateString(undefined, opts)} - ${end.toLocaleDateString(undefined, opts)}`;
+    }
+
+    function buildDateList() {
+      dateList = [];
+      const startStr = dateStartInput.value;
+      const endStr = dateEndInput.value;
+      if (!startStr || !endStr) return;
+
+      const start = new Date(startStr + "T00:00:00");
+      const end = new Date(endStr + "T00:00:00");
+      if (isNaN(start) || isNaN(end) || end < start) {
+        alert("Please choose a valid Start and End date (End must be after Start).");
+        return;
+      }
+
+      const diffMs = end - start;
+      const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+      if (diffDays > 30) {
+        alert("Maximum date coverage is 31 days.");
+        dateEndInput.value = "";
+        return;
+      }
+
+      for (let i = 0; i <= diffDays; i++) {
+        const d = new Date(start);
+        d.setDate(start.getDate() + i);
+        const iso = d.toISOString().slice(0, 10);
+        const label = d.toLocaleDateString(undefined, {
+          weekday: "short",
+          month: "short",
+          day: "numeric",
+          year: "numeric"
+        });
+        dateList.push({ iso, label });
+      }
+
+      if (currentStoreKey) {
+        const s = schedulesByStore[currentStoreKey];
+        s.dateList = dateList;
+        s.dateStart = startStr;
+        s.dateEnd = endStr;
+      }
+    }
+
+    function getDayLabel(dayIdx) {
+      if (dateList[dayIdx]) return dateList[dayIdx].label;
+      return `Day ${dayIdx + 1}`;
+    }
+
+    function ensureDefaultStaff(sched) {
+      if (!sched.staff || sched.staff.length === 0) {
+        sched.staff = DEFAULT_STAFF_PRESETS.map(p => ({ ...p }));
+      }
+    }
+
+    function saveCurrentStoreState() {
+      if (!currentStoreKey) return;
+      const sched = schedulesByStore[currentStoreKey];
+      sched.staff = staff;
+      sched.shifts = shifts;
+      sched.dateStart = dateStartInput.value;
+      sched.dateEnd = dateEndInput.value;
+      sched.dateList = dateList;
+    }
+
+    function loadStore(key) {
+      saveCurrentStoreState();
+      currentStoreKey = key;
+      const sched = schedulesByStore[key];
+
+      ensureDefaultStaff(sched);
+
+      staff = sched.staff || [];
+      shifts = sched.shifts || [];
+      dateStartInput.value = sched.dateStart || "";
+      dateEndInput.value = sched.dateEnd || "";
+      dateList = sched.dateList || [];
+
+      renderStaffList();
+      renderDaySelect();
+      renderShiftList();
+      renderStoreAndRange();
+      renderTimeline();
+    }
+
+    function renderStaffSelectors() {
+      staffSelect.innerHTML = "";
+      if (staff.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "-- Staff tags will appear here --";
+        staffSelect.appendChild(opt);
+      } else {
+        staff.forEach(s => {
+          const opt = document.createElement("option");
+          opt.value = s.id;
+          opt.textContent = displayName(s);
+          staffSelect.appendChild(opt);
+        });
+      }
+
+      const prevFilter = staffFilterSelect.value;
+      staffFilterSelect.innerHTML = "";
+      const optAll = document.createElement("option");
+      optAll.value = "";
+      optAll.textContent = "All staff";
+      staffFilterSelect.appendChild(optAll);
+      staff.forEach(s => {
+        const opt = document.createElement("option");
+        opt.value = s.id;
+        opt.textContent = displayName(s);
+        staffFilterSelect.appendChild(opt);
+      });
+      if ([...staffFilterSelect.options].some(o => o.value === prevFilter)) {
+        staffFilterSelect.value = prevFilter;
+      }
+    }
+
+    function renderStaffList() {
+      staffListDiv.innerHTML = "";
+      staff.forEach(s => {
+        const row = document.createElement("div");
+        row.className = "staff-row";
+        row.innerHTML = `
+          <div class="staff-role">
+            <span class="pill-color" style="background:${s.color};"></span>
+            <span>${s.roleLabel}</span>
+          </div>
+          <input
+            type="text"
+            class="staff-name-input"
+            data-id="${s.id}"
+            placeholder="Employee name"
+            value="${s.name ? s.name.replace(/"/g, "&quot;") : ""}"
+          />
+          <button type="button" class="staff-del-btn" data-id="${s.id}" title="Remove staff">✕</button>
+        `;
+        staffListDiv.appendChild(row);
+      });
+
+      renderStaffSelectors();
+    }
+
+    staffListDiv.addEventListener("input", (e) => {
+      const input = e.target.closest(".staff-name-input");
+      if (!input) return;
+      const id = input.dataset.id;
+      const s = staff.find(x => x.id === id);
+      if (!s) return;
+      s.name = input.value;
+      renderStaffSelectors();
+      renderShiftList();
+      renderTimeline();
+    });
+
+    staffListDiv.addEventListener("click", (e) => {
+      const btn = e.target.closest(".staff-del-btn");
+      if (!btn) return;
+      const id = btn.dataset.id;
+      const s = staff.find(x => x.id === id);
+      if (!s) return;
+      if (!confirm(`Remove ${displayName(s)} and all their shifts?`)) return;
+
+      staff = staff.filter(x => x.id !== id);
+      shifts = shifts.filter(sh => sh.staffId !== id);
+
+      renderStaffList();
+      renderShiftList();
+      renderTimeline();
+    });
+
+    // Add staff with unique light colors
+    addStaffRowBtn.addEventListener("click", () => {
+      if (!currentStoreKey) {
+        alert("Please select a store first.");
+        return;
+      }
+
+      const index = staff.length + 1;
+
+      const usedColors = new Set(staff.map(x => x.color));
+      let color = null;
+
+      for (const c of EXTRA_COLORS) {
+        if (!usedColors.has(c)) {
+          color = c;
+          break;
+        }
+      }
+
+      if (!color) {
+        color = generatePastelColor();
+      }
+
+      const newStaff = {
+        id: "extra_" + Date.now().toString(16),
+        roleLabel: "Staff " + index,
+        name: "",
+        color
+      };
+
+      staff.push(newStaff);
+      renderStaffList();
+      renderTimeline();
+    });
+
+    function renderDaySelect() {
+      daySelect.innerHTML = "";
+      if (dateList.length === 0) {
+        const opt = document.createElement("option");
+        opt.value = "";
+        opt.textContent = "-- Set date coverage first --";
+        daySelect.appendChild(opt);
+        return;
+      }
+      dateList.forEach((d, idx) => {
+        const opt = document.createElement("option");
+        opt.value = idx.toString();
+        opt.textContent = d.label;
+        daySelect.appendChild(opt);
+      });
+    }
+
+    function renderShiftList() {
+      if (shifts.length === 0) {
+        shiftListDiv.innerHTML = '<span class="small-text">No shifts added yet.</span>';
+        return;
+      }
+      const lines = shifts.map((sh, index) => {
+        const s = staff.find(x => x.id === sh.staffId);
+        const staffName = s ? displayName(s) : "[Unknown]";
+        const dName = getDayLabel(sh.dayIndex);
+        return `
+          <div class="shift-list-item">
+            <span>${dName}: <strong>${staffName}</strong>
+            (${minutesTo12Hour(sh.fromMinutes)} - ${minutesTo12Hour(sh.toMinutes)})</span>
+            <button class="shift-delete-btn" onclick="deleteShift(${index})" title="Delete shift">✕</button>
+          </div>`;
+      });
+      shiftListDiv.innerHTML = lines.join("");
+    }
+
+    function renderTotals() {
+      if (!totalsDiv) return;
+
+      const filterId = staffFilterSelect ? staffFilterSelect.value : "";
+
+      if (staff.length === 0 || shifts.length === 0) {
+        totalsDiv.innerHTML = filterId ? "No shifts for selected staff." : "No shifts yet.";
+        grandTotalDiv.textContent = "";
+        return;
+      }
+
+      const totalsMap = {};
+      shifts.forEach(sh => {
+        const s = staff.find(x => x.id === sh.staffId);
+        if (!s) return;
+        let start = sh.fromMinutes;
+        let end = sh.toMinutes;
+        if (end <= start) end += 24 * 60;
+        const mins = end - start;
+
+        if (!totalsMap[s.id]) {
+          totalsMap[s.id] = { id: s.id, name: displayName(s), minutes: 0, color: s.color };
+        }
+        totalsMap[s.id].minutes += mins;
+      });
+
+      let rows = Object.values(totalsMap);
+      rows.sort((a, b) => a.name.localeCompare(b.name));
+
+      if (filterId) {
+        rows = rows.filter(r => r.id === filterId);
+      }
+
+      if (rows.length === 0) {
+        totalsDiv.innerHTML = filterId ? "No shifts for selected staff." : "No shifts yet.";
+        grandTotalDiv.textContent = "";
+        return;
+      }
+
+      const html = rows.map(r => {
+        const hours = r.minutes / 60;
+        const hoursStr = Number.isInteger(hours) ? hours.toString() : hours.toFixed(1);
+        const color = r.color || "#d1d5db";
+        return `
+          <div class="totals-cell">
+            <div class="totals-left">
+              <span class="pill-color" style="background:${color}; border-color:#d1d5db;"></span>
+              <span class="totals-name">${r.name}</span>
+            </div>
+            <span>${hoursStr} hrs</span>
+          </div>`;
+      }).join("");
+
+      totalsDiv.innerHTML = html;
+
+      const totalMinutes = rows.reduce((sum, r) => sum + r.minutes, 0);
+      const totalHours = totalMinutes / 60;
+      const totalHoursStr = Number.isInteger(totalHours)
+        ? totalHours.toString()
+        : totalHours.toFixed(1);
+
+      if (!filterId) {
+        grandTotalDiv.textContent = `Grand total (all staff): ${totalHoursStr} hrs`;
+      } else {
+        grandTotalDiv.textContent = `Total for ${rows[0].name}: ${totalHoursStr} hrs`;
+      }
+    }
+
+    function renderTimeline() {
+      timelineContainer.innerHTML = "";
+
+      const nDays = dateList.length || 0;
+      const filterId = staffFilterSelect ? staffFilterSelect.value : "";
+
+      if (nDays === 0) {
+        noShiftsMsg.style.display = "block";
+        noShiftsMsg.textContent = "No shifts yet. Add staff and schedule on the left.";
+        totalsDiv.innerHTML = "No shifts yet.";
+        grandTotalDiv.textContent = "";
+        return;
+      }
+
+      const hasAnyForFilter = shifts.some(sh => !filterId || sh.staffId === filterId);
+      if (!hasAnyForFilter) {
+        noShiftsMsg.style.display = "block";
+        noShiftsMsg.textContent = filterId
+          ? "No shifts for selected staff in this date coverage."
+          : "No shifts yet. Add staff and schedule on the left.";
+      } else {
+        noShiftsMsg.style.display = "none";
+        noShiftsMsg.textContent = "No shifts yet. Add staff and schedule on the left.";
+      }
+
+      for (let dayIdx = 0; dayIdx < nDays; dayIdx++) {
+        const dayShifts = shifts
+          .filter(sh => sh.dayIndex === dayIdx && (!filterId || sh.staffId === filterId))
+          .sort((a, b) => a.fromMinutes - b.fromMinutes);
+
+        const dayDiv = document.createElement("div");
+        dayDiv.className = "timeline-day";
+
+        const label = document.createElement("div");
+        label.className = "day-label";
+        label.textContent = getDayLabel(dayIdx);
+        dayDiv.appendChild(label);
+
+        const barsContainer = document.createElement("div");
+        barsContainer.className = "day-bars";
+
+        if (dayShifts.length === 0) {
+          const emptyBar = document.createElement("div");
+          emptyBar.className = "timeline-bar";
+          barsContainer.appendChild(emptyBar);
+        } else {
+          dayShifts.forEach(sh => {
+            const bar = document.createElement("div");
+            bar.className = "timeline-bar";
+
+            const s = staff.find(x => x.id === sh.staffId);
+            const color = s ? s.color : "#93c5fd";
+
+            let start = sh.fromMinutes;
+            let end = sh.toMinutes;
+            if (end <= start) end += 24 * 60;
+
+            const clampedStart = Math.max(START_MIN, start);
+            const clampedEnd = Math.min(END_MIN, end);
+            const duration = clampedEnd - clampedStart;
+
+            if (duration > 0) {
+              const leftPercent = ((clampedStart - START_MIN) / TOTAL_MIN) * 100;
+              const widthPercent = (duration / TOTAL_MIN) * 100;
+
+              const block = document.createElement("div");
+              block.className = "shift-block";
+              block.style.left = `${leftPercent}%`;
+              block.style.width = `${widthPercent}%`;
+              block.style.background = color;
+
+              const staffName = s ? displayName(s) : "Staff";
+              const labelTextFull =
+                `${staffName} ${minutesTo12Hour(sh.fromMinutes)} - ${minutesTo12Hour(sh.toMinutes)}`;
+              const labelTextShort =
+                `${staffName} ${minutesTo12HourShort(sh.fromMinutes)}-${minutesTo12HourShort(sh.toMinutes)}`;
+
+              block.title = labelTextFull;
+
+              const textSpan = document.createElement("span");
+              textSpan.textContent = labelTextShort;
+              block.appendChild(textSpan);
+
+              const globalIndex = shifts.indexOf(sh);
+              block.addEventListener("click", () => {
+                handleShiftBlockClick(globalIndex);
+              });
+
+              bar.appendChild(block);
+            }
+
+            barsContainer.appendChild(bar);
+          });
+        }
+
+        dayDiv.appendChild(barsContainer);
+        timelineContainer.appendChild(dayDiv);
+      }
+
+      renderTotals();
+    }
+
+    function renderStoreAndRange() {
+      let storeName = "[Store Name]";
+      if (storeSelect.selectedIndex > 0) {
+        storeName = storeSelect.options[storeSelect.selectedIndex].text;
+      }
+      storeTitleDisplay.textContent = storeName;
+      weekRangeDisplay.textContent = formatDateRange(
+        dateStartInput.value,
+        dateEndInput.value
+      );
+    }
+
+    function resetShiftsIfAny() {
+      if (shifts.length === 0) return true;
+      const ok = confirm(
+        "Changing date coverage will clear all existing shifts for this store. Continue?"
+      );
+      if (!ok) return false;
+      shifts.length = 0;
+      renderShiftList();
+      return true;
+    }
+
+    window.deleteShift = function (index) {
+      if (index < 0 || index >= shifts.length) return;
+      if (!confirm("Delete this shift?")) return;
+      shifts.splice(index, 1);
+      renderShiftList();
+      renderTimeline();
+    };
+
+    function handleShiftBlockClick(index) {
+      if (index < 0 || index >= shifts.length) return;
+      const sh = shifts[index];
+      const s = staff.find(x => x.id === sh.staffId);
+      const staffName = s ? displayName(s) : "Staff";
+
+      const msg =
+        `Shift for ${staffName} (${minutesTo12Hour(sh.fromMinutes)} - ${minutesTo12Hour(
+          sh.toMinutes
+        )}).\n\n` +
+        "Type:\n" +
+        "1 = Rename this staff (all their shifts)\n" +
+        "2 = Delete this shift\n" +
+        "Cancel = Do nothing";
+
+      const choice = prompt(msg, "1");
+      if (choice === "1") {
+        const newName = prompt("Enter new name for this staff:", staffName);
+        if (newName && newName.trim()) {
+          if (s) s.name = newName.trim();
+          renderStaffList();
+          renderShiftList();
+          renderTimeline();
+        }
+      } else if (choice === "2") {
+        if (!confirm("Delete this shift?")) return;
+        shifts.splice(index, 1);
+        renderShiftList();
+        renderTimeline();
+      }
+    }
+
+    addShiftBtn.addEventListener("click", () => {
+      if (!currentStoreKey) {
+        alert("Please select a store first.");
+        return;
+      }
+      if (dateList.length === 0) {
+        alert("Please set the date coverage first.");
+        return;
+      }
+
+      const dayIndexStr = daySelect.value;
+      const staffId = staffSelect.value;
+      const fromStr = timeFromInput.value;
+      const toStr = timeToInput.value;
+
+      if (dayIndexStr === "") {
+        alert("Please select a date.");
+        return;
+      }
+      const dayIndex = parseInt(dayIndexStr, 10);
+
+      if (!staffId) {
+        alert("Please select a staff.");
+        return;
+      }
+
+      const fromMin = timeStringToMinutes(fromStr);
+      const toMin = timeStringToMinutes(toStr);
+
+      if (fromMin === null || toMin === null) {
+        alert("Please enter both From and To times.");
+        return;
+      }
+      if (fromMin === toMin) {
+        alert("From and To cannot be the same time.");
+        return;
+      }
+
+      shifts.push({
+        dayIndex,
+        staffId,
+        fromMinutes: fromMin,
+        toMinutes: toMin
+      });
+
+      renderTimeline();
+      renderShiftList();
+    });
+
+    clearShiftsBtn.addEventListener("click", () => {
+      if (!confirm("Clear all shifts for this store?")) return;
+      shifts.length = 0;
+      renderTimeline();
+      renderShiftList();
+    });
+
+    storeSelect.addEventListener("change", () => {
+      const key = storeSelect.value;
+      if (!key) {
+        saveCurrentStoreState();
+        currentStoreKey = "";
+        staff = [];
+        shifts = [];
+        dateList = [];
+        dateStartInput.value = "";
+        dateEndInput.value = "";
+        renderStaffList();
+        renderDaySelect();
+        renderShiftList();
+        renderStoreAndRange();
+        renderTimeline();
+        return;
+      }
+      loadStore(key);
+    });
+
+    nextStoreBtn.addEventListener("click", () => {
+      let idx = STORE_KEYS.indexOf(storeSelect.value);
+      if (idx === -1) idx = 0;
+      else idx = (idx + 1) % STORE_KEYS.length;
+      const nextKey = STORE_KEYS[idx];
+      storeSelect.value = nextKey;
+      loadStore(nextKey);
+    });
+
+    function handleDateChange() {
+      if (!currentStoreKey) {
+        alert("Please select a store first.");
+        return;
+      }
+      const canChange = resetShiftsIfAny();
+      if (!canChange) {
+        const sched = schedulesByStore[currentStoreKey];
+        dateStartInput.value = sched.dateStart || "";
+        dateEndInput.value = sched.dateEnd || "";
+        return;
+      }
+      buildDateList();
+      renderDaySelect();
+      renderStoreAndRange();
+      renderTimeline();
+      renderShiftList();
+    }
+
+    dateStartInput.addEventListener("input", handleDateChange);
+    dateEndInput.addEventListener("input", handleDateChange);
+
+    staffFilterSelect.addEventListener("change", () => {
+      renderTimeline();
+    });
+
+    // PRINT with orientation select
+    printBtn.addEventListener("click", () => {
+      const orient = printOrientSelect.value; // auto / portrait / landscape
+      let styleEl = null;
+
+      if (orient === "portrait" || orient === "landscape") {
+        styleEl = document.createElement("style");
+        styleEl.id = "printOrientationStyle";
+        styleEl.innerHTML = `
+          @media print {
+            @page { size: ${orient}; }
+          }
+        `;
+        document.head.appendChild(styleEl);
+      }
+
+      window.print();
+
+      if (styleEl) {
+        setTimeout(() => {
+          if (styleEl.parentNode) styleEl.parentNode.removeChild(styleEl);
+        }, 1000);
+      }
+    });
+
+    // ----- SAVE AS IMAGE -----
+    function showImageModal() {
+      imageModal.style.display = "flex";
+    }
+
+    function hideImageModal() {
+      imageModal.style.display = "none";
+    }
+
+    function updateImagePreviewTransform() {
+      const scale = parseFloat(imgScaleRange.value) / 100;
+      imgScaleLabel.textContent = imgScaleRange.value + "%";
+      // orientation does NOT rotate the image anymore – it just affects how user thinks of the page.
+      imagePreview.style.transform = `scale(${scale})`;
+    }
+
+    saveImgBtn.addEventListener("click", () => {
+      if (typeof html2canvas === "undefined") {
+        alert("Saving as picture needs internet at least once (to load html2canvas).");
+        return;
+      }
+      const target = document.getElementById("graphCapture");
+      html2canvas(target, {
+        scale: 2,
+        width: target.scrollWidth,
+        height: target.scrollHeight
+      }).then(canvas => {
+        lastCaptureCanvas = canvas;
+        imagePreview.src = canvas.toDataURL("image/png");
+        imgOrientSelect.value = "landscape";
+        imgScaleRange.value = 100;
+        updateImagePreviewTransform();
+        showImageModal();
+      });
+    });
+
+    imgOrientSelect.addEventListener("change", updateImagePreviewTransform);
+    imgScaleRange.addEventListener("input", updateImagePreviewTransform);
+
+    imageCloseBtn.addEventListener("click", hideImageModal);
+
+    imageDownloadBtn.addEventListener("click", () => {
+      if (!lastCaptureCanvas) return;
+      const scale = parseFloat(imgScaleRange.value) / 100;
+
+      const src = lastCaptureCanvas;
+      const outW = src.width * scale;
+      const outH = src.height * scale;
+
+      const outCanvas = document.createElement("canvas");
+      outCanvas.width = outW;
+      outCanvas.height = outH;
+      const ctx = outCanvas.getContext("2d");
+
+      ctx.drawImage(src, 0, 0, outW, outH);
+
+      outCanvas.toBlob(blob => {
+        const link = document.createElement("a");
+        const today = new Date().toISOString().slice(0, 10);
+        const store = storeSelect.value || "schedule";
+        link.href = URL.createObjectURL(blob);
+        link.download = `teresa-${store}-${today}.png`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+      });
+    });
+
+    function renderInitial() {
+      currentStoreKey = STORE_KEYS[0];
+      const sched = schedulesByStore[currentStoreKey];
+      ensureDefaultStaff(sched);
+      staff = sched.staff;
+      renderStaffList();
+      renderDaySelect();
+      renderShiftList();
+      renderTimeline();
+      renderStoreAndRange();
+    }
+
+    renderInitial();
+  </script>
+</body>
+</html>
